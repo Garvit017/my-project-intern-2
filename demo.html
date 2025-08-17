@@ -1,0 +1,452 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DataTable Component Demo</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+      background-color: #f5f7fa;
+      color: #333;
+      padding: 20px;
+    }
+
+    .app {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+
+    .app-header {
+      margin-bottom: 30px;
+      text-align: center;
+    }
+
+    .app-header h1 {
+      color: #2c3e50;
+      font-size: 2.5rem;
+      margin-bottom: 10px;
+    }
+
+    .app-main {
+      background-color: #fff;
+      border-radius: 8px;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+      padding: 20px;
+    }
+
+    .app-main h2 {
+      color: #2c3e50;
+      margin-bottom: 20px;
+      font-size: 1.5rem;
+    }
+
+    .controls {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+
+    button {
+      background-color: #3498db;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      padding: 8px 16px;
+      cursor: pointer;
+      font-size: 14px;
+      transition: background-color 0.2s;
+    }
+
+    button:hover {
+      background-color: #2980b9;
+    }
+
+    .selection-info {
+      margin-top: 30px;
+      padding: 15px;
+      background-color: #f8f9fa;
+      border-radius: 4px;
+      border-left: 4px solid #3498db;
+    }
+
+    .selection-info h3 {
+      color: #2c3e50;
+      margin-bottom: 10px;
+      font-size: 1.2rem;
+    }
+
+    .selection-info ul {
+      list-style-type: none;
+    }
+
+    .selection-info li {
+      padding: 5px 0;
+      border-bottom: 1px solid #eee;
+    }
+
+    .selection-info li:last-child {
+      border-bottom: none;
+    }
+
+    /* DataTable Styles */
+    .data-table-container {
+      width: 100%;
+      overflow-x: auto;
+      margin-bottom: 1rem;
+      border-radius: 4px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    .data-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+      font-size: 14px;
+      color: #333;
+    }
+
+    .data-table th,
+    .data-table td {
+      padding: 12px 16px;
+      text-align: left;
+      border-bottom: 1px solid #eaeaea;
+    }
+
+    .data-table th {
+      background-color: #f8f9fa;
+      font-weight: 600;
+      color: #495057;
+      position: sticky;
+      top: 0;
+      z-index: 1;
+    }
+
+    .data-table tbody tr:hover {
+      background-color: #f5f5f5;
+    }
+
+    .data-table tbody tr.selected {
+      background-color: rgba(0, 123, 255, 0.1);
+    }
+
+    .data-table th.sortable {
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .data-table th.sortable:hover {
+      background-color: #e9ecef;
+    }
+
+    .sort-icon {
+      display: inline-block;
+      margin-left: 4px;
+      font-size: 12px;
+    }
+
+    .data-table-loading,
+    .data-table-empty {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 2rem;
+      background-color: #fff;
+      border: 1px solid #eaeaea;
+      border-radius: 4px;
+      color: #6c757d;
+      font-size: 16px;
+    }
+
+    .data-table-loading {
+      min-height: 200px;
+    }
+
+    .data-table-checkbox-header,
+    .data-table-checkbox-cell {
+      width: 40px;
+      text-align: center;
+    }
+
+    .sr-only {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      white-space: nowrap;
+      border-width: 0;
+    }
+
+    @media (max-width: 768px) {
+      .app {
+        padding: 10px;
+      }
+      
+      .app-header h1 {
+        font-size: 2rem;
+      }
+      
+      .controls {
+        flex-direction: column;
+      }
+
+      .data-table th,
+      .data-table td {
+        padding: 8px 12px;
+        font-size: 13px;
+      }
+    }
+
+    @media (max-width: 480px) {
+      .data-table th,
+      .data-table td {
+        padding: 6px 8px;
+        font-size: 12px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <header class="app-header">
+      <h1>DataTable Demo</h1>
+    </header>
+    <main class="app-main">
+      <div class="controls">
+        <button id="toggleLoading">Show Loading</button>
+        <button id="clearData">Clear Data</button>
+        <button id="resetData">Reset Data</button>
+      </div>
+      
+      <h2>Users Table</h2>
+      <div id="dataTableContainer"></div>
+      
+      <div id="selectionInfo" class="selection-info" style="display: none;">
+        <h3>Selected Users:</h3>
+        <ul id="selectedList"></ul>
+      </div>
+    </main>
+  </div>
+
+  <script>
+    // Sample data
+    const initialData = [
+      { id: 1, name: 'John Doe', email: 'john@example.com', age: 30 },
+      { id: 2, name: 'Jane Smith', email: 'jane@example.com', age: 25 },
+      { id: 3, name: 'Bob Johnson', email: 'bob@example.com', age: 40 },
+      { id: 4, name: 'Alice Brown', email: 'alice@example.com', age: 35 },
+      { id: 5, name: 'Charlie Wilson', email: 'charlie@example.com', age: 28 },
+    ];
+
+    // Column definitions
+    const columns = [
+      { key: 'id', title: 'ID', dataIndex: 'id' },
+      { key: 'name', title: 'Name', dataIndex: 'name', sortable: true },
+      { key: 'email', title: 'Email', dataIndex: 'email' },
+      { key: 'age', title: 'Age', dataIndex: 'age', sortable: true },
+    ];
+
+    // State
+    let data = [...initialData];
+    let loading = false;
+    let selectedRows = [];
+    let sortConfig = null;
+
+    // DOM Elements
+    const dataTableContainer = document.getElementById('dataTableContainer');
+    const toggleLoadingBtn = document.getElementById('toggleLoading');
+    const clearDataBtn = document.getElementById('clearData');
+    const resetDataBtn = document.getElementById('resetData');
+    const selectionInfo = document.getElementById('selectionInfo');
+    const selectedList = document.getElementById('selectedList');
+
+    // Event Listeners
+    toggleLoadingBtn.addEventListener('click', () => {
+      loading = !loading;
+      toggleLoadingBtn.textContent = loading ? 'Stop Loading' : 'Show Loading';
+      renderDataTable();
+    });
+
+    clearDataBtn.addEventListener('click', () => {
+      data = [];
+      selectedRows = [];
+      renderDataTable();
+      updateSelectionInfo();
+    });
+
+    resetDataBtn.addEventListener('click', () => {
+      data = [...initialData];
+      renderDataTable();
+    });
+
+    // Sort function
+    function sortData(key) {
+      let direction = 'ascending';
+      
+      if (sortConfig && sortConfig.key === key && sortConfig.direction === 'ascending') {
+        direction = 'descending';
+      }
+
+      const sortedData = [...data].sort((a, b) => {
+        if (a[key] < b[key]) {
+          return direction === 'ascending' ? -1 : 1;
+        }
+        if (a[key] > b[key]) {
+          return direction === 'ascending' ? 1 : -1;
+        }
+        return 0;
+      });
+
+      data = sortedData;
+      sortConfig = { key, direction };
+      renderDataTable();
+    }
+
+    // Row selection function
+    function handleRowSelect(row) {
+      const rowIndex = selectedRows.findIndex(r => r.id === row.id);
+      
+      if (rowIndex > -1) {
+        selectedRows.splice(rowIndex, 1);
+      } else {
+        selectedRows.push(row);
+      }
+      
+      renderDataTable();
+      updateSelectionInfo();
+    }
+
+    // Check if row is selected
+    function isRowSelected(row) {
+      return selectedRows.some(r => r.id === row.id);
+    }
+
+    // Update selection info
+    function updateSelectionInfo() {
+      if (selectedRows.length > 0) {
+        selectionInfo.style.display = 'block';
+        selectedList.innerHTML = '';
+        
+        selectedRows.forEach(row => {
+          const li = document.createElement('li');
+          li.textContent = row.name;
+          selectedList.appendChild(li);
+        });
+      } else {
+        selectionInfo.style.display = 'none';
+      }
+    }
+
+    // Render DataTable
+    function renderDataTable() {
+      if (loading) {
+        dataTableContainer.innerHTML = `
+          <div class="data-table-container" aria-busy="true">
+            <div class="data-table-loading" aria-live="polite">
+              <span>Loading...</span>
+            </div>
+          </div>
+        `;
+        return;
+      }
+
+      if (!data.length) {
+        dataTableContainer.innerHTML = `
+          <div class="data-table-container">
+            <div class="data-table-empty" aria-live="polite">
+              <span>No data available</span>
+            </div>
+          </div>
+        `;
+        return;
+      }
+
+      let tableHTML = `
+        <div class="data-table-container" role="region" aria-label="Data Table">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th class="data-table-checkbox-header">
+                  <span class="sr-only">Select</span>
+                </th>
+      `;
+
+      // Add column headers
+      columns.forEach(column => {
+        const isSorted = sortConfig && sortConfig.key === column.dataIndex;
+        const sortDirection = isSorted ? sortConfig.direction : '';
+        const sortIconHTML = column.sortable 
+          ? `<span class="sort-icon" aria-hidden="true">${
+              isSorted 
+                ? (sortDirection === 'ascending' ? ' ↑' : ' ↓') 
+                : ' ⇅'
+            }</span>` 
+          : '';
+        
+        tableHTML += `
+          <th 
+            ${column.sortable ? 'class="sortable"' : ''}
+            ${column.sortable ? `onclick="sortData('${column.dataIndex}')"` : ''}
+            ${isSorted ? `aria-sort="${sortDirection}"` : ''}
+          >
+            ${column.title}${sortIconHTML}
+          </th>
+        `;
+      });
+
+      tableHTML += `
+              </tr>
+            </thead>
+            <tbody>
+      `;
+
+      // Add data rows
+      data.forEach((row, rowIndex) => {
+        const isSelected = isRowSelected(row);
+        
+        tableHTML += `
+          <tr 
+            class="${isSelected ? 'selected' : ''}"
+            onclick="handleRowSelect(data[${rowIndex}])"
+            aria-selected="${isSelected}"
+          >
+            <td class="data-table-checkbox-cell">
+              <input 
+                type="checkbox" 
+                ${isSelected ? 'checked' : ''}
+                aria-label="Select row ${rowIndex + 1}"
+              />
+            </td>
+        `;
+
+        columns.forEach(column => {
+          tableHTML += `<td>${row[column.dataIndex]}</td>`;
+        });
+
+        tableHTML += `</tr>`;
+      });
+
+      tableHTML += `
+            </tbody>
+          </table>
+        </div>
+      `;
+
+      dataTableContainer.innerHTML = tableHTML;
+    }
+
+    // Initial render
+    renderDataTable();
+  </script>
+</body>
+</html>
